@@ -8,22 +8,25 @@ exports.handler = async (event) => {
   const schema={type:'object',additionalProperties:false,required:['fecha','estanques'],properties:{fecha:{type:'string'},estanques:{type:'array',items:{type:'object',additionalProperties:false,required:['id','medidas'],properties:{id:{type:'string'},medidas:{type:'array',items:{type:'object',additionalProperties:false,required:['numero','peso_g','estado'],properties:{numero:{type:'integer'},peso_g:{type:['number','null']},estado:{type:'string',enum:['OK','ANOMALIA','DUDOSO']}}}}}}}}};
   const prompt=`Analiza esta hoja de muestreo biometrico manuscrita.
 
-ESTRUCTURA:
-- Esquina superior derecha: fecha
-- Cabeceras superiores: IDs de estanque escritos a mano (por ejemplo E3, F6, D5A)
-- La hoja tiene 50 filas numeradas y puede tener hasta 8 columnas de datos
-- Las 4 columnas de la IZQUIERDA pertenecen al primer estanque
-- Las 4 columnas de la DERECHA pertenecen al segundo estanque SOLO SI tienen numeros escritos de forma clara y continua
+ESTRUCTURA DE LA HOJA:
+- Esquina superior derecha: fecha del muestreo
+- Cabeceras superiores: IDs de estanque escritos a mano
+- 50 filas numeradas del 1 al 50
+- Cada estanque ocupa 4 columnas de datos
 
-REGLA CRITICA PARA DETECTAR NUMERO DE ESTANQUES:
-- Si las 4 columnas derechas estan VACIAS o en BLANCO: devuelve SOLO 1 estanque
-- Si las 4 columnas derechas tienen numeros escritos claramente en al menos 20 filas: devuelve 2 estanques
-- Unas pocas marcas o manchas en la zona derecha NO son un segundo estanque
-- En caso de duda, devuelve 1 estanque
+NUMERO DE MUESTRAS POR ESTANQUE:
+- Cada fila contiene 4 valores de peso independientes (uno por columna)
+- Total por estanque = 50 filas x 4 columnas = 200 muestras individuales
+- Debes extraer los 4 valores de cada fila como 4 muestras separadas
+- Numeralas secuencialmente: fila 1 col1=muestra 1, fila 1 col2=muestra 2, fila 1 col3=muestra 3, fila 1 col4=muestra 4, fila 2 col1=muestra 5, etc.
 
-EXTRACCION:
-- Lee cada estanque fila por fila, las 4 columnas de izquierda a derecha
-- Usa el ID real del estanque que aparece en la cabecera (no uses "Estanque 1")
+NUMERO DE ESTANQUES:
+- Si las 4 columnas derechas estan VACIAS: devuelve SOLO 1 estanque
+- Si las 4 columnas derechas tienen numeros en al menos 20 filas: devuelve 2 estanques
+- En caso de duda devuelve 1 estanque
+
+INSTRUCCIONES:
+- Usa el ID real del estanque que aparece en la cabecera
 - Marca ANOMALIA si el valor supera 2.5 desviaciones tipicas de la media del lote
 - Marca DUDOSO si no lees el numero con certeza
 - peso_g null si la celda es ilegible
@@ -31,7 +34,7 @@ EXTRACCION:
   try{
     const ctrl=new AbortController();
     const t=setTimeout(()=>ctrl.abort(),25000);
-    const res=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',signal:ctrl.signal,headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},body:JSON.stringify({model:'gpt-4o-mini',max_tokens:8096,response_format:{type:'json_schema',json_schema:{name:'muestreo',strict:true,schema:schema}},messages:[{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${image}`}},{type:'text',text:prompt}]}]})});
+    const res=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',signal:ctrl.signal,headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},body:JSON.stringify({model:'gpt-4o-mini',max_tokens:16000,response_format:{type:'json_schema',json_schema:{name:'muestreo',strict:true,schema:schema}},messages:[{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${image}`}},{type:'text',text:prompt}]}]})});
     clearTimeout(t);
     if(!res.ok) throw new Error(`OpenAI ${res.status}: ${await res.text()}`);
     const data=await res.json();
