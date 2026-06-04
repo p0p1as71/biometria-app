@@ -6,7 +6,28 @@ exports.handler = async (event) => {
   const apiKey=process.env.OPENAI_API_KEY;
   if(!apiKey) return {statusCode:500,body:JSON.stringify({error:'API key no configurada'})};
   const schema={type:'object',additionalProperties:false,required:['fecha','estanques'],properties:{fecha:{type:'string'},estanques:{type:'array',items:{type:'object',additionalProperties:false,required:['id','medidas'],properties:{id:{type:'string'},medidas:{type:'array',items:{type:'object',additionalProperties:false,required:['numero','peso_g','estado'],properties:{numero:{type:'integer'},peso_g:{type:['number','null']},estado:{type:'string',enum:['OK','ANOMALIA','DUDOSO']}}}}}}}}};
-  const prompt=`Analiza esta hoja de muestreo manuscrita. Esquina superior derecha: fecha. Cabeceras: IDs estanque. Hasta 50 filas y 8 columnas. 4 columnas IZQUIERDA=estanque 1. 4 columnas DERECHA=estanque 2 si hay datos. Si solo 4 columnas escritas es 1 estanque. Lee fila por fila. Marca ANOMALIA si supera 2.5 desviaciones tipicas. Marca DUDOSO si no lees con certeza. peso_g null si ilegible. Anomalias por estanque separadas.`;
+  const prompt=`Analiza esta hoja de muestreo biometrico manuscrita.
+
+ESTRUCTURA:
+- Esquina superior derecha: fecha
+- Cabeceras superiores: IDs de estanque escritos a mano (por ejemplo E3, F6, D5A)
+- La hoja tiene 50 filas numeradas y puede tener hasta 8 columnas de datos
+- Las 4 columnas de la IZQUIERDA pertenecen al primer estanque
+- Las 4 columnas de la DERECHA pertenecen al segundo estanque SOLO SI tienen numeros escritos de forma clara y continua
+
+REGLA CRITICA PARA DETECTAR NUMERO DE ESTANQUES:
+- Si las 4 columnas derechas estan VACIAS o en BLANCO: devuelve SOLO 1 estanque
+- Si las 4 columnas derechas tienen numeros escritos claramente en al menos 20 filas: devuelve 2 estanques
+- Unas pocas marcas o manchas en la zona derecha NO son un segundo estanque
+- En caso de duda, devuelve 1 estanque
+
+EXTRACCION:
+- Lee cada estanque fila por fila, las 4 columnas de izquierda a derecha
+- Usa el ID real del estanque que aparece en la cabecera (no uses "Estanque 1")
+- Marca ANOMALIA si el valor supera 2.5 desviaciones tipicas de la media del lote
+- Marca DUDOSO si no lees el numero con certeza
+- peso_g null si la celda es ilegible
+- Calcula anomalias por estanque por separado`;
   try{
     const ctrl=new AbortController();
     const t=setTimeout(()=>ctrl.abort(),25000);
