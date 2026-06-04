@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Previsualizar Excel</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body style="background:#f8fafc; padding-bottom: 80px;">
+
+  <div class="preview-header">
+    <button class="back-btn" onclick="history.back()">← Volver</button>
+    <div class="preview-title" id="preview-title">Muestreo</div>
+  </div>
+
+  <div class="preview-meta" id="preview-meta"></div>
+
+  <div class="preview-table-wrap" id="preview-table-wrap">
+    <p style="padding:20px; color:#64748b; font-size:13px;">Cargando datos...</p>
+  </div>
+
+  <div class="download-bar">
+    <button class="btn-dl-excel" onclick="descargar()">⬇ Descargar Excel</button>
+    <button class="btn-dl-mail"  onclick="enviarDesdePreview()">✉ Enviar por mail</button>
+  </div>
+
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <script src="js/excel.js"></script>
+  <script>
+    const resultado = JSON.parse(sessionStorage.getItem('resultado_actual') || 'null');
+    const soloAlertas = sessionStorage.getItem('solo_alertas') === '1';
+
+    if (!resultado) {
+      document.getElementById('preview-table-wrap').innerHTML =
+        '<p style="padding:20px;color:#dc2626;">No hay datos. Vuelve al dashboard.</p>';
+    } else {
+      // Título
+      const titulo = soloAlertas ? 'Alertas de la sesión' :
+        resultado.estanques.map(e => e.id).join(' + ');
+      document.getElementById('preview-title').textContent = titulo;
+
+      // Meta
+      let totalAlertas = 0;
+      resultado.estanques.forEach(e => {
+        totalAlertas += e.medidas.filter(m => m.estado !== 'OK').length;
+      });
+      document.getElementById('preview-meta').innerHTML =
+        resultado.estanques.map(e => {
+          const a = e.medidas.filter(m => m.estado === 'ANOMALIA').length;
+          const d = e.medidas.filter(m => m.estado === 'DUDOSO').length;
+          return `<span>${e.id}: ${e.medidas.length} muestras · ${a} anomalías · ${d} dudosos</span>`;
+        }).join('') +
+        (soloAlertas ? `<span style="color:#dc2626; font-weight:700;">Mostrando solo alertas</span>` : '');
+
+      // Tabla
+      document.getElementById('preview-table-wrap').innerHTML =
+        resultadoATablaHTML(resultado, soloAlertas);
+
+      // Limpiar flag
+      sessionStorage.removeItem('solo_alertas');
+    }
+
+    function descargar() {
+      if (resultado) generarYDescargarExcel(resultado);
+    }
+
+    function enviarDesdePreview() {
+      if (!resultado) return;
+      const asunto = encodeURIComponent(
+        `Muestreo ${resultado.fecha} · ${resultado.estanques.map(e => e.id).join('+')}`
+      );
+      generarYDescargarExcel(resultado);
+      window.location.href = `mailto:?subject=${asunto}`;
+    }
+  </script>
+</body>
+</html>

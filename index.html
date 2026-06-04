@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#1e40af">
+  <title>Biometría App</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="header-title">
+      <span class="header-icon">🐟</span>
+      <span>BIOMETRÍA</span>
+    </div>
+    <div class="header-sub">Muestreo de campo</div>
+  </header>
+
+  <!-- DASHBOARD -->
+  <main class="dashboard">
+
+    <div class="dashboard-date" id="dashboard-date"></div>
+
+    <!-- ESTADO ACTUAL -->
+    <div class="session-status" id="session-status">
+      Sin sesión activa
+    </div>
+
+    <!-- BTN: FOTO -->
+    <div class="btn-group">
+      <button class="btn btn-blue" id="btn-foto" onclick="toggleFotoMenu()">
+        <span class="btn-icon">📷</span>
+        <span class="btn-text">
+          TOMAR / SUBIR FOTO
+          <span class="btn-sub">Hoja de muestreo</span>
+        </span>
+      </button>
+      <!-- Submenu foto -->
+      <div class="foto-submenu" id="foto-submenu">
+        <button class="submenu-btn" onclick="triggerCamera()">
+          📷 &nbsp; Tomar foto con cámara
+        </button>
+        <button class="submenu-btn" onclick="triggerUpload()">
+          🖼 &nbsp; Subir desde galería
+        </button>
+      </div>
+      <!-- Inputs ocultos -->
+      <input type="file" id="input-camera" accept="image/*" capture="environment" style="display:none" onchange="onFotoSelected(this)">
+      <input type="file" id="input-upload" accept="image/*" style="display:none" onchange="onFotoSelected(this)">
+    </div>
+
+    <!-- BTN: PROCESAR -->
+    <div class="btn-group">
+      <button class="btn btn-blue-dim" id="btn-procesar" onclick="procesarFoto()" disabled>
+        <span class="btn-icon">✨</span>
+        <span class="btn-text">
+          PROCESAR FOTO
+          <span class="btn-sub" id="procesar-sub">Carga una foto primero</span>
+        </span>
+        <div class="thumbnail-wrap" id="thumbnail-wrap"></div>
+      </button>
+    </div>
+
+    <!-- BTN: PREVISUALIZAR -->
+    <div class="btn-group">
+      <button class="btn btn-green" id="btn-preview" onclick="irPreview()" disabled>
+        <span class="btn-icon">📊</span>
+        <span class="btn-text">
+          PREVISUALIZAR EXCEL
+          <span class="btn-sub" id="preview-sub">Procesa una foto primero</span>
+        </span>
+      </button>
+    </div>
+
+    <!-- BTN: ENVIAR -->
+    <div class="btn-group">
+      <button class="btn btn-orange" id="btn-enviar" onclick="enviarMail()" disabled>
+        <span class="btn-icon">✉️</span>
+        <span class="btn-text">
+          ENVIAR POR MAIL
+          <span class="btn-sub" id="enviar-sub">Procesa una foto primero</span>
+        </span>
+      </button>
+    </div>
+
+    <!-- BTN: HISTÓRICO -->
+    <div class="btn-group">
+      <button class="btn btn-slate" onclick="irHistorico()">
+        <span class="btn-icon">🗂</span>
+        <span class="btn-text">
+          VER HISTÓRICO Y FOTOS
+          <span class="btn-sub" id="historico-sub">Sesiones guardadas: <strong id="num-sesiones">0</strong></span>
+        </span>
+      </button>
+    </div>
+
+    <!-- BTN: ALERTAS -->
+    <div class="btn-group">
+      <button class="btn btn-dark-red" id="btn-alertas" onclick="irAlertas()" disabled>
+        <span class="btn-icon">🔍</span>
+        <span class="btn-text">
+          VER DETALLES · ALERTAS: <span id="num-alertas">0</span>
+          <span class="btn-sub" id="alertas-sub">Sin alertas activas</span>
+        </span>
+      </button>
+    </div>
+
+  </main>
+
+  <!-- LOADER OVERLAY -->
+  <div class="loader-overlay" id="loader" style="display:none">
+    <div class="loader-box">
+      <div class="spinner"></div>
+      <div class="loader-text" id="loader-text">Procesando...</div>
+    </div>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/excel.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
