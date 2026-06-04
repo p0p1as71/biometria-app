@@ -76,7 +76,26 @@ async function procesarFoto() {
   mostrarLoader('Analizando hoja de muestreo...');
 
   try {
-    const resultado = await llamarAPI(state.fotoBase64);
+    
+async function comprimirImagen(base64, maxWidth=1024, quality=0.82) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      let w=img.width, h=img.height;
+      if(w>maxWidth){h=Math.round(h*maxWidth/w);w=maxWidth;}
+      c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      resolve(c.toDataURL('image/jpeg',quality).split(',')[1]);
+    };
+    img.src='data:image/jpeg;base64,'+base64;
+  });
+}
+
+    mostrarLoader('Comprimiendo imagen...');
+    const imgComp = await comprimirImagen(state.fotoBase64);
+    mostrarLoader('Analizando hoja de muestreo...');
+    const resultado = await llamarAPI(imgComp);
     state.resultado = resultado;
 
     // Calcular totales
