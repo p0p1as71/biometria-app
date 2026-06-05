@@ -3,46 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Histórico de sesiones</title>
+  <title>Histórico</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body style="background:#f8fafc; padding-bottom: 24px;">
-
   <div class="preview-header">
     <button class="back-btn" onclick="history.back()">← Volver</button>
     <div class="preview-title">Histórico</div>
   </div>
-
-  <div style="padding: 12px 16px; font-size: 12px; color: #64748b; border-bottom: 1px solid #e2e8f0; background:white;">
+  <div style="padding:12px 16px;font-size:12px;color:#64748b;border-bottom:1px solid #e2e8f0;background:white;">
     <strong id="total-sesiones">0</strong> sesiones guardadas en este dispositivo
   </div>
-
   <div class="history-list" id="history-list">
-    <p style="text-align:center; color:#94a3b8; padding:40px; font-size:14px;">
-      Sin sesiones guardadas todavía.
-    </p>
+    <p style="text-align:center;color:#94a3b8;padding:40px;font-size:14px;">Sin sesiones todavía.</p>
   </div>
-
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <script src="js/storage.js"></script>
-  <script src="js/excel.js"></script>
   <script>
     const sesiones = Storage.getSesiones();
     document.getElementById('total-sesiones').textContent = sesiones.length;
-
     if (sesiones.length > 0) {
       const list = document.getElementById('history-list');
       list.innerHTML = '';
-
       sesiones.forEach(s => {
         const tieneAlertas = s.totalAlertas > 0;
         const card = document.createElement('div');
         card.className = 'session-card';
         card.innerHTML = `
-          ${s.fotoBase64
-            ? `<img class="session-thumb" src="data:image/jpeg;base64,${s.fotoBase64}" alt="foto">`
-            : `<div class="session-thumb" style="display:flex;align-items:center;justify-content:center;font-size:24px;">📄</div>`
-          }
+          <div class="session-thumb" style="display:flex;align-items:center;justify-content:center;font-size:28px;background:#e2e8f0;">📋</div>
           <div class="session-info">
             <div class="s-date">${s.fecha}</div>
             <div class="s-tanks">${s.estanques}</div>
@@ -50,14 +37,9 @@
           </div>
           <span class="session-badge ${tieneAlertas ? '' : 'ok'}">
             ${tieneAlertas ? `⚠ ${s.totalAlertas}` : '✓ OK'}
-          </span>
-        `;
-
-        card.onclick = () => {
-          sessionStorage.setItem('resultado_actual', JSON.stringify(s.resultado));
-          window.location.href = 'preview.html';
-        };
-
+          </span>`;
+        // Sin onclick: el histórico solo muestra metadatos
+        // Para ver el detalle hay que procesar la foto de nuevo
         list.appendChild(card);
       });
     }
