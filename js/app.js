@@ -122,7 +122,7 @@ async function comprimirImagen(base64, maxWidth=1024, quality=0.82) {
       fotoBase64: state.fotoBase64,
       resultado: resultado
     };
-    guardarSesion(sesion);
+    try { guardarSesion(sesion); } catch(e) { console.warn(e); }
 
     // Actualizar UI
     document.getElementById('session-status').textContent =
@@ -207,11 +207,30 @@ function ocultarLoader() {
 
 // ── Sesiones locales ───────────────────────────────────────────────
 function guardarSesion(sesion) {
-  const sesiones = JSON.parse(localStorage.getItem('sesiones') || '[]');
-  sesiones.unshift(sesion); // más reciente primero
-  if (sesiones.length > 50) sesiones.pop(); // máximo 50
-  localStorage.setItem('sesiones', JSON.stringify(sesiones));
-  actualizarContadorSesiones();
+  const ligera = {
+    id: sesion.id,
+    fecha: sesion.fecha,
+    estanques: sesion.estanques,
+    totalMuestras: sesion.totalMuestras,
+    totalAlertas: sesion.totalAlertas
+  };
+  try {
+    let sesiones = [];
+    try { sesiones = JSON.parse(localStorage.getItem('sesiones') || '[]'); } catch(e) { sesiones = []; }
+    sesiones.unshift(ligera);
+    if (sesiones.length > 30) sesiones = sesiones.slice(0, 30);
+    localStorage.setItem('sesiones', JSON.stringify(sesiones));
+  } catch(e) {
+    // localStorage lleno o corrupto: limpiar y guardar solo esta
+    try {
+      localStorage.clear();
+      localStorage.setItem('sesiones', JSON.stringify([ligera]));
+    } catch(e2) {
+      // Si aun falla, ignorar: el histórico no es crítico
+      console.warn('No se pudo guardar histórico:', e2);
+    }
+  }
+  try { actualizarContadorSesiones(); } catch(e) {}
 }
 
 function cargarSesiones() {
